@@ -4,23 +4,20 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      jsxRuntime: 'automatic'
+    }),
     nodePolyfills({
-      include: ['crypto', 'buffer', 'stream'],
-      globals: {
-        Buffer: true,
-        global: true,
-        process: true
-      }
+      include: ['crypto', 'buffer', 'stream']
     })
   ],
   optimizeDeps: {
-    exclude: ['lucide-react']
+    include: ['react', 'react/jsx-runtime', 'react-dom']
   },
   build: {
-    rollupOptions: {
-      // Ensure these dependencies are properly bundled
-      external: ['react/jsx-runtime'],
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true
     }
   }
 });
