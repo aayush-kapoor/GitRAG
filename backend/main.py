@@ -17,7 +17,13 @@ app = FastAPI(title="GitHub Repository RAG API")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify the frontend domain
+    allow_origins=[
+        "http://localhost:5173",    # Local development
+        "http://localhost:4173",    # Local preview
+        "https://*.netlify.app",    # Netlify domains
+        "https://*.vercel.app",     # Vercel domains
+        "https://gitrag.vercel.app" # Your specific Vercel domain
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
