@@ -29,7 +29,7 @@ export function Header() {
           </Button>
           
           <a
-            href="https://github.com/yourusername/repo-rag"
+            href="https://github.com/aayush-kapoor/GitRAG"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
