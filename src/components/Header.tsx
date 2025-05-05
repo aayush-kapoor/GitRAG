@@ -10,7 +10,7 @@ export function Header() {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <GitHubIcon className="h-6 w-6 text-gray-900 dark:text-white" />
-          <span className="text-xl font-bold text-gray-900 dark:text-white">RepoRAG</span>
+          <span className="text-xl font-bold text-gray-900 dark:text-white">GitRAG</span>
         </div>
         
         <div className="flex items-center gap-4">
