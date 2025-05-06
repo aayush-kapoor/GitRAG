@@ -22,7 +22,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           variant === 'danger' && 'bg-error-600 text-white hover:bg-error-700 active:bg-error-800',
           
           // Size styles
-          size === 'sm' && 'h-8 px-3 text-xs',
+          size === 'sm' && 'h-9 px-4 text-xs',
           size === 'md' && 'h-10 px-4 text-sm',
           size === 'lg' && 'h-12 px-6 text-base',
           
