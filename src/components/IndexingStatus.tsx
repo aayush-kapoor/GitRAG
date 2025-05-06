@@ -42,7 +42,7 @@ export function IndexingStatus() {
         {indexingStatus === 'indexing' && (
           <div className="mb-4">
             <div className="relative pt-1">
-              <div className="flex items-center justify-between mb-2">
+              {/* <div className="flex items-center justify-between mb-2">
                 <div>
                   <span className="text-xs font-semibold inline-block text-primary-600 dark:text-primary-400">
                     {Math.round(progress)}% Complete
@@ -53,10 +53,10 @@ export function IndexingStatus() {
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.3 }}
                   className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary-500"
                 />
-              </div>
+              </div> */}
             </div>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               This may take a few minutes depending on the repository size.

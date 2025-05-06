@@ -19,7 +19,7 @@ export function RepoInput() {
       });
       
       // Start polling for status updates
-      const statusInterval = setInterval(async () => {
+      const pollInterval = setInterval(async () => {
         try {
           const status = await repoApi.getIndexingStatus(data.task_id);
           
@@ -30,14 +30,14 @@ export function RepoInput() {
           );
           
           if (status.status === 'completed' || status.status === 'failed') {
-            clearInterval(statusInterval);
+            clearInterval(pollInterval);
           }
         } catch (error) {
           console.error('Failed to get indexing status:', error);
-          clearInterval(statusInterval);
+          clearInterval(pollInterval);
           updateIndexingStatus('failed', 0, 'Failed to get indexing status');
         }
-      }, 2000);
+      }, 1000); // Poll every second instead of every 2 seconds
     },
     onError: (error) => {
       console.error('Failed to index repository:', error);
