@@ -22,7 +22,8 @@ class TaskManager:
             "progress": 0,
             "message": "Task created",
             "created_at": time.time(),
-            "updated_at": time.time()
+            "updated_at": time.time(),
+            "last_progress_update": time.time()  # Track last progress update
         }
         
     def update_task(self, task_id: str, status: str = None, progress: int = None, 
@@ -31,19 +32,25 @@ class TaskManager:
         if task_id not in self.tasks:
             return False
             
+        current_time = time.time()
+        task = self.tasks[task_id]
+        
         if status:
-            self.tasks[task_id]["status"] = status
+            task["status"] = status
             
         if progress is not None:
-            self.tasks[task_id]["progress"] = progress
+            # Ensure progress is between 0 and 100
+            progress = max(0, min(100, progress))
+            task["progress"] = progress
+            task["last_progress_update"] = current_time
             
         if message:
-            self.tasks[task_id]["message"] = message
+            task["message"] = message
             
         if error:
-            self.tasks[task_id]["error"] = error
+            task["error"] = error
             
-        self.tasks[task_id]["updated_at"] = time.time()
+        task["updated_at"] = current_time
         return True
         
     def get_task(self, task_id: str) -> Dict[str, Any]:

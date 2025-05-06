@@ -1,6 +1,6 @@
 import os
 import re
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple, Callable
 import pygments
 from pygments.lexers import get_lexer_for_filename, ClassNotFound
 from .repository import is_binary_file
@@ -14,33 +14,52 @@ CODE_EXTENSIONS = {
     '.lua', '.ex', '.exs', '.erl', '.hrl', '.hs', '.sql', '.r'
 }
 
-def process_repository(repo_path: str) -> List[Dict[str, Any]]:
+def process_repository(repo_path: str, progress_callback: Callable[[int], None] = None) -> List[Dict[str, Any]]:
     """
     Process all files in a repository and prepare them for embedding.
     
     Args:
         repo_path: Path to the cloned repository.
+        progress_callback: Optional callback function to report progress.
         
     Returns:
         List[Dict[str, Any]]: List of processed files with metadata.
     """
     processed_files = []
+    total_files = 0
+    processed_count = 0
     
+    # First, count total eligible files
     for root, _, files in os.walk(repo_path):
-        # Skip hidden directories and common directories to ignore
+        if any(part.startswith('.') for part in root.split(os.sep)) or \
+           any(ignore_dir in root.split(os.sep) for ignore_dir in ['node_modules', 'venv', '__pycache__', 'build', 'dist']):
+            continue
+            
+        for file in files:
+            if file.startswith('.'):
+                continue
+                
+            file_path = os.path.join(root, file)
+            if is_binary_file(file_path):
+                continue
+                
+            ext = os.path.splitext(file)[1].lower()
+            if ext in CODE_EXTENSIONS:
+                total_files += 1
+    
+    # Process files
+    for root, _, files in os.walk(repo_path):
         if any(part.startswith('.') for part in root.split(os.sep)) or \
            any(ignore_dir in root.split(os.sep) for ignore_dir in ['node_modules', 'venv', '__pycache__', 'build', 'dist']):
             continue
         
         for file in files:
-            file_path = os.path.join(root, file)
-            relative_path = os.path.relpath(file_path, repo_path)
-            
-            # Skip hidden files
             if file.startswith('.'):
                 continue
                 
-            # Skip binary files
+            file_path = os.path.join(root, file)
+            relative_path = os.path.relpath(file_path, repo_path)
+            
             if is_binary_file(file_path):
                 continue
                 
@@ -63,6 +82,11 @@ def process_repository(repo_path: str) -> List[Dict[str, Any]]:
                         "content": chunk,
                         "extension": ext
                     })
+                
+                processed_count += 1
+                if progress_callback and total_files > 0:
+                    progress = int((processed_count / total_files) * 100)
+                    progress_callback(progress)
                     
             except Exception as e:
                 # Skip files that can't be read properly
@@ -180,7 +204,7 @@ def chunk_by_size(content: str, max_chunk_size: int) -> List[str]:
     current_size = 0
     
     for line in lines:
-        line_size = len(line) + 1  # +1 for the newline
+        line_size = len(line) + 1
         
         if current_size + line_size > max_chunk_size and current_chunk:
             chunks.append('\n'.join(current_chunk))

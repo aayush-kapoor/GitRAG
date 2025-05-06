@@ -61,24 +61,12 @@ async def startup_event():
 
 @app.post("/index-repo", response_model=IndexRepoResponse)
 async def index_repo(request: IndexRepoRequest, background_tasks: BackgroundTasks):
-    """
-    Start indexing a GitHub repository.
-    
-    This endpoint initiates a background task to clone the repository,
-    process its files, generate embeddings, and store them in the vector database.
-    """
+    """Start indexing a GitHub repository."""
     repo_url = request.repo_url
     task_id = str(uuid.uuid4())
     
-    # Create task
     task_manager.create_task(task_id, repo_url)
-    
-    # Start background task
-    background_tasks.add_task(
-        process_repository_task,
-        task_id, 
-        repo_url
-    )
+    background_tasks.add_task(process_repository_task, task_id, repo_url)
     
     return IndexRepoResponse(
         task_id=task_id,
@@ -111,11 +99,6 @@ async def query_repository(request: QueryRequest):
     repo_url = request.repo_url
     query = request.query
     
-    # Check if repository exists in vector database
-    repo_exists = True  # This should check if the repo exists in the DB
-    if not repo_exists:
-        raise HTTPException(status_code=404, detail="Repository not indexed yet")
-    
     # Generate embeddings for the query
     query_embedding = get_embeddings(query)
     
@@ -146,19 +129,37 @@ async def query_repository(request: QueryRequest):
 async def process_repository_task(task_id: str, repo_url: str):
     """Background task to process a repository."""
     try:
-        # Update task status
-        task_manager.update_task(task_id, status="indexing", progress=0, message="Cloning repository")
+        task_manager.update_task(
+            task_id, 
+            status="indexing", 
+            progress=0, 
+            message="Cloning repository"
+        )
         
         # Clone repository
         repo_path = clone_repository(repo_url)
-        task_manager.update_task(task_id, progress=10, message="Repository cloned")
+        task_manager.update_task(
+            task_id, 
+            progress=10, 
+            message="Repository cloned"
+        )
         
-        # Process repository files
-        files = process_repository(repo_path)
-        task_manager.update_task(task_id, progress=40, message=f"Processed {len(files)} files")
+        def update_progress(progress: int):
+            """Callback to update processing progress."""
+            # Scale progress to 40-80 range (40% for processing, 40% for embeddings)
+            scaled_progress = 10 + int(progress * 0.4)  # 10-50%
+            task_manager.update_task(
+                task_id,
+                progress=scaled_progress,
+                message=f"Processing files: {progress}% complete"
+            )
+        
+        # Process repository files with progress tracking
+        files = process_repository(repo_path, progress_callback=update_progress)
         
         # Generate embeddings
         embeddings = []
+        total_files = len(files)
         for i, file in enumerate(files):
             file_embedding = get_embeddings(file["content"])
             embeddings.append({
@@ -166,12 +167,23 @@ async def process_repository_task(task_id: str, repo_url: str):
                 "content": file["content"],
                 "embedding": file_embedding
             })
-            progress = 40 + int((i / len(files)) * 40)
-            task_manager.update_task(task_id, progress=progress, message=f"Generated embeddings for {i+1}/{len(files)} files")
+            
+            # Scale progress to remaining 50-90 range
+            progress = 50 + int((i / total_files) * 40)  # 50-90%
+            task_manager.update_task(
+                task_id,
+                progress=progress,
+                message=f"Generating embeddings: {int((i/total_files) * 100)}% complete"
+            )
         
         # Store embeddings in vector database
         store_embeddings(repo_url, embeddings)
-        task_manager.update_task(task_id, progress=100, status="completed", message="Repository indexed successfully")
+        task_manager.update_task(
+            task_id,
+            progress=100,
+            status="completed",
+            message="Repository indexed successfully"
+        )
         
     except Exception as e:
         task_manager.update_task(
